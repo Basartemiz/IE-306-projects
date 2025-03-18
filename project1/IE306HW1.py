@@ -17,6 +17,7 @@ mu_cb = alpha * mu_ch # Average healing rate at hospital.
 p1 = 0.3 # The chance of patient going home instead of hospital.
 hospital_capaticy = 5 # Number of beds in hospital
 
+number_of_patients_in_nurse_queue = 0
 number_of_patients_to_be_evaluated = 0
 number_of_critical_patients_at_home = 0
 number_of_critical_patients_at_hospital = 0
@@ -54,9 +55,7 @@ future_event_list = [] # The list will contain tuples of times and event codes.
 # 3: treated at hospital
 # 4: treated at home
 
-waiting_nurse_queue = [] # This is the queue for all the patients that couldn't be evaluated due to lack of nurses.
-# As nurses finish evaluating each patient, new patients will arrive from the queue.
-# This is a first in first out queue that stores the arrival time of each patient in it.
+
 
 def Add_Event(time,code): # time is the time of the event , code is the type of the event.
     future_event_list.append((time,code))
@@ -71,6 +70,7 @@ def Add_Event(time,code): # time is the time of the event , code is the type of 
     return
 
 def Arrival(event_time): # To execute the arrival process of a patient to the hospital. Event code is 1
+    global number_of_patients_in_nurse_queue
     global number_of_patients_to_arrive
     global number_of_patients_to_be_evaluated
     number_of_patients_to_arrive -= 1
@@ -80,9 +80,10 @@ def Arrival(event_time): # To execute the arrival process of a patient to the ho
     if(number_of_patients_to_be_evaluated <= S): # If there is enough nurses.
          Add_Event(event_time+Generate_Nurse_Service_Time(),2) # The departure of patient
     else:
-        waiting_nurse_queue.append(event_time) # If all nurses are busy, we put the patient ina waiting queue.It's first in first out.
+        number_of_patients_in_nurse_queue += 1 # If all nurses are busy, we put the patient ina waiting queue.It's first in first out.
     
 def Departure_Triage(event_time): # To execute the departure process of a customer from a triage nurse. Event code is 2
+    global number_of_patients_in_nurse_queue
     global number_of_patients_to_be_evaluated
     global number_of_critical_patients_at_hospital
     global number_of_critical_patients_at_home
@@ -100,9 +101,9 @@ def Departure_Triage(event_time): # To execute the departure process of a custom
             Add_Event(event_time+Generate_Home_Healing_Time('s'),4) # The treatment in home due to patient contidion. Stable Condition
             
     # Now we will appoint another departure even for a patient in waiting queue (If there is any).
-    if len(waiting_nurse_queue) > 0:
-        waiting_patient_arrival_time = waiting_nurse_queue.pop(0) # We take the patient from the queue
-        Add_Event(waiting_patient_arrival_time+Generate_Nurse_Service_Time(),2) # Then we appoint a eparture for that patient.
+    if number_of_patients_in_nurse_queue > 0:
+        number_of_patients_in_nurse_queue -= 1 # One less patient in the queue.
+        Add_Event(event_time+Generate_Nurse_Service_Time(),2) # Then we appoint a eparture for that patient.
         
 
 def Treated_at_Hospital(event_time): # To execute the discharge process of a customer from a bed. Event code is 3
