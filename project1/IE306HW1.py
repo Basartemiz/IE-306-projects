@@ -12,8 +12,8 @@ mu_a = 1.0 # Average patient arrival rate.
 mu_t = 1.0 # Average service rate of each nurse.
 mu_s = 0.16 # Average healing rate at home for stable patients.
 mu_ch = 2.0 # Average healing rate at home for critical patients.
-alpha = (random.random())*0.5 + 1.25 # Alpha belong to an uniform distribution
-mu_cb = alpha * mu_ch # Average healing rate at hospital.
+alpha = 1.0 # Alpha belong to an uniform distribution
+mu_cb = 1.0 # Average healing rate at hospital.
 p1 = 0.3 # The chance of patient going home instead of hospital.
 hospital_capaticy = 5 # Number of beds in hospital
 
@@ -70,6 +70,8 @@ def Add_Event(time,code): # time is the time of the event , code is the type of 
     return
 
 def Arrival(event_time): # To execute the arrival process of a patient to the hospital. Event code is 1
+    global alpha
+    global mu_ch
     global number_of_patients_in_nurse_queue
     global number_of_patients_to_arrive
     global number_of_patients_to_be_evaluated
@@ -94,11 +96,15 @@ def Departure_Triage(event_time): # To execute the departure process of a custom
             number_of_critical_patients_at_home += 1
             Add_Event(event_time+Generate_Hospital_Healing_Time(),3) # The treatment in hospital.
         else:
+            alpha = random.random()*0.5+1.25
+            mu_ch = mu_cb * alpha
             number_of_critical_patients_at_hospital += 1
             Add_Event(event_time+Generate_Home_Healing_Time('c'),4) # The treatment in home due to bed inavaiblitiy. Critical condition.
     else:
-            number_of_critical_patients_at_hospital += 1
-            Add_Event(event_time+Generate_Home_Healing_Time('s'),4) # The treatment in home due to patient contidion. Stable Condition
+        alpha = random.random()*0.5+1.25
+        mu_ch = mu_cb * alpha
+        number_of_critical_patients_at_hospital += 1
+        Add_Event(event_time+Generate_Home_Healing_Time('s'),4) # The treatment in home due to patient contidion. Stable Condition
             
     # Now we will appoint another departure even for a patient in waiting queue (If there is any).
     if number_of_patients_in_nurse_queue > 0:
