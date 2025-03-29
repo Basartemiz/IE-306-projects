@@ -5,7 +5,7 @@ import math
 
 seed = 1232 # It will be use to generate the same pseudo number over and over again.
 random.seed(seed)
-arrival_amount = 10 # The number of clients that arrive to the hospital.
+arrival_amount = 100 # The number of clients that arrive to the hospital.
                       # This is used as our simulation is a discrete event simulation.
 S = 3 # Number of nurses.
 mu_a = 1.0 # Average patient arrival rate.
@@ -37,8 +37,10 @@ patient_going_home_ratio = 0.0
 average_healing_time = 0.0
 
 # Now we will define variables that will be used to calculate outputs.
+current_time = 0.0
 amount_of_time_triage_or_hospital_is_empty = 0.0
-amount_of_time_triage_or_hospital_and_empty = 0.0
+amount_of_time_triage_and_hospital_is_empty = 0.0
+total_occupied_bed_times_time = 0.0
 total_number_of_patinets_treated = 0
 total_number_of_patinets_treated_at_home = 0
 total_number_of_critical_patinets = 0
@@ -96,12 +98,16 @@ def Arrival(event_time): # To execute the arrival process of a patient to the ho
     global number_of_patients_in_nurse_queue
     global number_of_patients_to_arrive
     global number_of_patients_to_be_evaluated
+    global average_nurse_utilization
     number_of_patients_to_arrive -= 1
     number_of_patients_to_be_evaluated += 1
     if number_of_patients_to_arrive > 0:
         Add_Event(event_time+Generate_Interarrival(),1) # The arrival of next patient
     if(number_of_patients_to_be_evaluated <= S): # If there is enough nurses.
-         Add_Event(event_time+Generate_Nurse_Service_Time(),2) # The departure of patient
+        nurse_service_time = Generate_Nurse_Service_Time()
+        Add_Event(event_time+nurse_service_time,2) # The departure of patient
+        average_nurse_utilization = (average_nurse_utilization*S*event_time + nurse_service_time)/(S*(event_time + nurse_service_time)) # Calculating average nurse utilization.
+         
     else:
         number_of_patients_in_nurse_queue += 1 # If all nurses are busy, we put the patient ina waiting queue.It's first in first out.
     
@@ -112,7 +118,9 @@ def Departure_Triage(event_time): # To execute the departure process of a custom
     global number_of_patients_at_home
     global total_number_of_critical_patinets
     global total_number_of_critical_patinets_going_home
+    global total_occupied_bed_times_time
     global average_healing_time
+    global average_nurse_utilization
     number_of_patients_to_be_evaluated -= 1
 
     if(random.random() > p1): # To determine whether a patient is n critical condition.
@@ -121,7 +129,8 @@ def Departure_Triage(event_time): # To execute the departure process of a custom
             number_of_patients_at_hospital += 1
             healing_time = Generate_Hospital_Healing_Time()
             Add_Event(event_time+healing_time,3) # The treatment in hospital.
-            average_healing_time = (average_healing_time*total_number_of_patinets_treated+healing_time)/(total_number_of_patinets_treated+1)
+            average_healing_time = (average_healing_time*total_number_of_patinets_treated+healing_time)/(total_number_of_patinets_treated+1) # Calculating average healing time.
+            total_occupied_bed_times_time += healing_time # Calculating  total_occupied_bed_times_time. This type of calculation shouldn't lead to an error as we finish the sumilation after everyone has left the hospital.
         else:
             number_of_patients_at_home += 1
             total_number_of_critical_patinets_going_home += 1
@@ -129,7 +138,7 @@ def Departure_Triage(event_time): # To execute the departure process of a custom
             mu_ch = mu_cb * alpha
             healing_time = Generate_Home_Healing_Time('c')
             Add_Event(event_time+healing_time,4) # The treatment in home due to bed inavaiblitiy. Critical condition.
-            average_healing_time = (average_healing_time*total_number_of_patinets_treated+healing_time)/(total_number_of_patinets_treated+1)
+            average_healing_time = (average_healing_time*total_number_of_patinets_treated+healing_time)/(total_number_of_patinets_treated+1) # Calculating average healing time.
     else:
         number_of_patients_at_home += 1
         alpha = random.random()*0.5+1.25
@@ -142,8 +151,9 @@ def Departure_Triage(event_time): # To execute the departure process of a custom
     # Now we will appoint another departure even for a patient in waiting queue (If there is any).
     if number_of_patients_in_nurse_queue > 0:
         number_of_patients_in_nurse_queue -= 1 # One less patient in the queue.
-        Add_Event(event_time+Generate_Nurse_Service_Time(),2) # Then we appoint a eparture for that patient.
-        
+        nurse_service_time = Generate_Nurse_Service_Time()
+        Add_Event(event_time+nurse_service_time,2) # Then we appoint a eparture for that patient.
+        average_nurse_utilization = (average_nurse_utilization*S*event_time + nurse_service_time)/(S*(event_time + nurse_service_time)) # Calculating average nurse utilization.
 
 def Treated_at_Hospital(event_time): # To execute the discharge process of a customer from a bed. Event code is 3
     global number_of_patients_at_hospital
@@ -160,9 +170,21 @@ def Treated_at_Home(event_time): # To execute the discharge process of a custome
     total_number_of_patinets_treated_at_home += 1
     
 def Advance_Time(): # To advance the time to the next imminent event in the future event list. Return whether it executed an event or not.
+    global current_time
+    global amount_of_time_triage_and_hospital_is_empty
+    global amount_of_time_triage_or_hospital_is_empty
     if len(future_event_list) == 0:
         return False
     event_time,event_code = future_event_list.pop(0)
+    
+    # Now we will update some total time variables.
+    # We do this before current time is updated.
+    if(number_of_patients_to_be_evaluated == 0 and number_of_patients_at_hospital == 0):
+        amount_of_time_triage_and_hospital_is_empty += event_time - current_time
+    
+    if(number_of_patients_to_be_evaluated == 0 or number_of_patients_at_hospital == 0):
+        amount_of_time_triage_or_hospital_is_empty += event_time - current_time
+    
     if(event_code == 1):
         Arrival(event_time)
     if(event_code == 2):
@@ -171,6 +193,7 @@ def Advance_Time(): # To advance the time to the next imminent event in the futu
         Treated_at_Hospital(event_time)
     if(event_code == 4):
         Treated_at_Home(event_time)
+    current_time = event_time
     return True 
     
 def Execute_Event(): # Iterates through the future event list and executes the next imminent process.
@@ -180,16 +203,32 @@ def Execute_Event(): # Iterates through the future event list and executes the n
 
  
 Add_Event(Generate_Interarrival(),1)
+print("------------------")
 print(future_event_list)
-while(Advance_Time()):    
+print(current_time)
+print(number_of_patients_in_nurse_queue)
+print(number_of_patients_at_home)
+print(number_of_patients_at_hospital)
+print("------------------")
+
+while(Advance_Time()):  
+    print("------------------")
     print(future_event_list)
+    print(current_time)
     print(number_of_patients_in_nurse_queue)
     print(number_of_patients_at_home)
     print(number_of_patients_at_hospital)
+    print("------------------")
+    
+triage_or_hospital_empty_ratio = amount_of_time_triage_or_hospital_is_empty/current_time
+
+triage_and_hospital_empty_ratio = amount_of_time_triage_and_hospital_is_empty/current_time
     
 critical_going_home_ratio = total_number_of_critical_patinets_going_home/total_number_of_critical_patinets
     
 patient_going_home_ratio = total_number_of_patinets_treated_at_home/total_number_of_patinets_treated
+
+average_occupied_bed = total_occupied_bed_times_time/current_time
     
 print("Results:")
 print("triage_or_hospital_empty_ratio:",triage_or_hospital_empty_ratio)
