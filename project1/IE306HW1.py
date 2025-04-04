@@ -5,7 +5,7 @@ import math
 
 seed = 1232 # It will be use to generate the same pseudo number over and over again.
 random.seed(seed)
-arrival_amount = 1000 # The number of clients that arrive to the hospital.
+arrival_amount = 5 # The number of clients that arrive to the hospital.
                       # This is used as our simulation is a discrete event simulation.
 S = 3 # Number of nurses.
 mu_a = 1.0 # Average patient arrival rate.
@@ -78,7 +78,16 @@ future_event_list = [] # The list will contain tuples of times and event codes.
 # 3: treated at hospital
 # 4: treated at home
 
+event_names = ["","arrival","departure triage","treated at hospital","treated at home"] # For display
 
+def Display_Future_Event_List(): # This function is added for the sule purpose of increasing the readibility of the output.
+    print("future event list:")
+    if(len(future_event_list) == 0):
+        print("list is empty")
+    for element in future_event_list:
+        time,code = element
+        print("time:",time,"\tevent:",event_names[code])
+    print("---")
 
 def Add_Event(time,code): # time is the time of the event , code is the type of the event.
     future_event_list.append((time,code))
@@ -205,20 +214,22 @@ def Execute_Event(): # Iterates through the future event list and executes the n
  
 Add_Event(Generate_Interarrival(),1)
 print("------------------")
-print(future_event_list)
-print(current_time)
-print(number_of_patients_in_nurse_queue)
-print(number_of_patients_at_home)
-print(number_of_patients_at_hospital)
+Display_Future_Event_List()
+print("current time:",current_time)
+print("number of patients to be evaluated:",number_of_patients_to_be_evaluated)
+print("number of patients in nurse queue:",number_of_patients_in_nurse_queue)
+print("number of patients at home:",number_of_patients_at_home)
+print("number of patients at hospital:",number_of_patients_at_hospital)
 print("------------------")
 
 while(Advance_Time()):  
     print("------------------")
-    print(future_event_list)
-    print(current_time)
-    print(number_of_patients_in_nurse_queue)
-    print(number_of_patients_at_home)
-    print(number_of_patients_at_hospital)
+    Display_Future_Event_List()
+    print("current time:",current_time)
+    print("number of patients to be evaluated:",number_of_patients_to_be_evaluated)
+    print("number of patients in nurse queue:",number_of_patients_in_nurse_queue)
+    print("number of patients at home:",number_of_patients_at_home)
+    print("number of patients at hospital:",number_of_patients_at_hospital)
     print("------------------")
     
 triage_or_hospital_empty_ratio = amount_of_time_triage_or_hospital_is_empty/current_time
@@ -232,11 +243,11 @@ patient_going_home_ratio = total_number_of_patinets_treated_at_home/total_number
 average_occupied_bed = total_occupied_bed_times_time/current_time
     
 print("Results:")
-print("triage_or_hospital_empty_ratio:",triage_or_hospital_empty_ratio)
-print("triage_and_hospital_empty_ratio:",triage_and_hospital_empty_ratio)
-print("critical_going_home_ratio:",critical_going_home_ratio)
-print("average_nurse_utilization:",average_nurse_utilization)
-print("average_occupied_bed:",average_occupied_bed)
-print("patient_going_home_ratio:",patient_going_home_ratio)
-print("average_healing_time:",average_healing_time)
+print("triage or hospital empty ratio:",triage_or_hospital_empty_ratio)
+print("triage and hospital empty ratio:",triage_and_hospital_empty_ratio)
+print("critical going home ratio:",critical_going_home_ratio)
+print("average nurse utilization:",average_nurse_utilization)
+print("average occupied bed:",average_occupied_bed)
+print("patient going home ratio:",patient_going_home_ratio)
+print("average healing time:",average_healing_time)
     
