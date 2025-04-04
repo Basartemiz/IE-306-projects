@@ -5,7 +5,7 @@ import math
 
 seed = 1232 # It will be use to generate the same pseudo number over and over again.
 random.seed(seed)
-arrival_amount = 100 # The number of clients that arrive to the hospital.
+arrival_amount = 1000 # The number of clients that arrive to the hospital.
                       # This is used as our simulation is a discrete event simulation.
 S = 3 # Number of nurses.
 mu_a = 1.0 # Average patient arrival rate.
@@ -93,8 +93,6 @@ def Add_Event(time,code): # time is the time of the event , code is the type of 
     return
 
 def Arrival(event_time): # To execute the arrival process of a patient to the hospital. Event code is 1
-    global alpha
-    global mu_ch
     global number_of_patients_in_nurse_queue
     global number_of_patients_to_arrive
     global number_of_patients_to_be_evaluated
@@ -112,6 +110,8 @@ def Arrival(event_time): # To execute the arrival process of a patient to the ho
         number_of_patients_in_nurse_queue += 1 # If all nurses are busy, we put the patient ina waiting queue.It's first in first out.
     
 def Departure_Triage(event_time): # To execute the departure process of a customer from a triage nurse. Event code is 2
+    global alpha
+    global mu_ch
     global number_of_patients_in_nurse_queue
     global number_of_patients_to_be_evaluated
     global number_of_patients_at_hospital
@@ -197,6 +197,7 @@ def Advance_Time(): # To advance the time to the next imminent event in the futu
     return True 
     
 def Execute_Event(): # Iterates through the future event list and executes the next imminent process.
+    # Didn't need to add anything here as advancing time also executes events.
     pass
 
 
