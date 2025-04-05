@@ -409,7 +409,6 @@ else: # If there are multiple runs, we will calculate the mean and S value of ou
     print("patient going home ratio variance:",patient_going_home_ratio_variance)
     print("average healing time variance:",average_healing_time_variance)
     print("------------------")
-    # To calculate the interval we should use T disribution . But we can approximate by using the normal distibution.
     print(f"The confidence intervals with %{int(confidence_level*100)} condifence level:")
     print(f"triage or hospital empty ratio interval: [{triage_or_hospital_empty_ratio_interval[0]},{triage_or_hospital_empty_ratio_interval[1]}]")
     print(f"triage and hospital empty ratio interval: [{triage_and_hospital_empty_ratio_interval[0]},{triage_and_hospital_empty_ratio_interval[1]}]")
