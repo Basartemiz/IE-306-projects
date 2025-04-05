@@ -5,7 +5,7 @@ import math
 
 seed = 1232 # It will be use to generate the same pseudo number over and over again.
 random.seed(seed)
-arrival_amount = 5 # The number of clients that arrive to the hospital.
+arrival_amount = 1000 # The number of clients that arrive to the hospital.
                       # This is used as our simulation is a discrete event simulation.
 S = 3 # Number of nurses.
 mu_a = 1.0 # Average patient arrival rate.
@@ -250,4 +250,5 @@ print("average nurse utilization:",average_nurse_utilization)
 print("average occupied bed:",average_occupied_bed)
 print("patient going home ratio:",patient_going_home_ratio)
 print("average healing time:",average_healing_time)
+    
     
